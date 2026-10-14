@@ -1,0 +1,435 @@
+@import "tailwindcss";
+
+/* ============================================================================
+   Amplified Traders — design system.
+   Brand: Deep Navy #0B1220 · Electric Blue #2F80ED (primary) ·
+          Amplified Gold #F5B942 (reward accent) · Dark Gray #171C26 · White
+   Personality: modern, energetic, connected, technology-first fintech community.
+
+   NOTE: the @theme block below is the SINGLE re-skin point.
+   - `brand`  = electric blue (primary action / technology / connection)
+   - `gold`   = amplified gold (reward, achievement, premium highlight)
+   - `positive` = gains / success (trading semantics: green = up)
+   ========================================================================= */
+
+@theme {
+  /* Surfaces — graphite stack (cooler than a navy-tinted stack) */
+  --color-background: #0b1220;
+  --color-surface: #10141b;
+  --color-card: #171c26;
+  --color-elevated: #1f2632;
+  --color-border: rgba(148, 163, 184, 0.12);
+  --color-border-strong: rgba(47, 128, 237, 0.36);
+
+  /* Text */
+  --color-foreground: #f8fafc;
+  --color-muted: #94a3b8;
+  --color-faint: #64748b;
+
+  /* Brand — electric blue (primary) */
+  --color-brand: #2f80ed;
+  --color-brand-bright: #5b9df3;
+  --color-brand-dark: #1c5fbf;
+  --color-brand-soft: #bbd6fa;
+
+  /* Gold — amplified reward / premium accent */
+  --color-gold: #f5b942;
+  --color-gold-bright: #ffd173;
+  --color-gold-dark: #c08a1e;
+  --color-gold-soft: #fbe3ae;
+
+  /* Positive / success (trading semantics) */
+  --color-positive: #2fd18c;
+  --color-positive-bright: #34e39b;
+
+  /* Status */
+  --color-success: #2fd18c;
+  --color-warning: #f5b942;
+  --color-danger: #f05252;
+
+  /* Type */
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-mono-code), ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  /* Radii — signature scale (softer than the house default) */
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.875rem;
+  --radius-2xl: 1.25rem;
+  --radius-3xl: 2rem;
+
+  /* Motion */
+  --animate-fade-up: fade-up 0.6s ease-out both;
+  --animate-marquee: marquee 40s linear infinite;
+  --animate-pulse-node: pulse-node 3.4s ease-in-out infinite;
+  --animate-float: float 7s ease-in-out infinite;
+  --animate-drift: drift 18s linear infinite;
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes pulse-node {
+  0%,
+  100% {
+    opacity: 0.45;
+    transform: scale(0.9);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-12px);
+  }
+}
+
+@keyframes drift {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: 480px 240px;
+  }
+}
+
+/* ---------------------------------------------------------------- base ---- */
+
+:root {
+  color-scheme: dark;
+}
+
+* {
+  border-color: var(--color-border);
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: rgba(47, 128, 237, 0.32);
+  color: #fff;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: #0b1220;
+}
+::-webkit-scrollbar-thumb {
+  background: #232c3b;
+  border-radius: 999px;
+  border: 2px solid #0b1220;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #33415a;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* ------------------------------------------------------------- helpers ---- */
+
+/* Gradient text: white → light blue → electric blue */
+.text-gradient-brand {
+  background: linear-gradient(135deg, #ffffff 0%, #9cc4f8 52%, #2f80ed 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+/* Gradient text: white → soft gold → amplified gold */
+.text-gradient-gold {
+  background: linear-gradient(135deg, #ffffff 0%, #ffd173 55%, #f5b942 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+.text-gradient-plain {
+  background: linear-gradient(180deg, #ffffff 0%, #cbd5e1 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+/* Primary surface gradient (electric blue) */
+.bg-brand-gradient {
+  background-image: linear-gradient(135deg, #5b9df3 0%, #2f80ed 48%, #1c5fbf 100%);
+}
+
+/* Reward surface gradient (amplified gold) */
+.bg-gold-gradient {
+  background-image: linear-gradient(135deg, #ffd173 0%, #f5b942 50%, #c08a1e 100%);
+}
+
+.border-brand-gradient {
+  border: 1px solid transparent;
+  background:
+    linear-gradient(var(--color-card), var(--color-card)) padding-box,
+    linear-gradient(135deg, rgba(91, 157, 243, 0.6), rgba(245, 185, 66, 0.35)) border-box;
+}
+
+.border-gold-gradient {
+  border: 1px solid transparent;
+  background:
+    linear-gradient(var(--color-card), var(--color-card)) padding-box,
+    linear-gradient(135deg, rgba(255, 209, 115, 0.6), rgba(47, 128, 237, 0.3)) border-box;
+}
+
+/* Ambient radial glows */
+.glow-brand {
+  position: relative;
+}
+.glow-brand::before {
+  content: "";
+  position: absolute;
+  inset: -40% -10% auto -10%;
+  height: 460px;
+  background: radial-gradient(ellipse at center, rgba(47, 128, 237, 0.18) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: -1;
+}
+
+.glow-gold {
+  position: relative;
+}
+.glow-gold::before {
+  content: "";
+  position: absolute;
+  inset: -40% -10% auto -10%;
+  height: 420px;
+  background: radial-gradient(ellipse at center, rgba(245, 185, 66, 0.14) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: -1;
+}
+
+.card {
+  background: linear-gradient(160deg, #1b2130 0%, #12161e 100%);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-2xl);
+}
+
+.card-hover {
+  transition:
+    transform 0.25s ease,
+    border-color 0.25s ease,
+    box-shadow 0.25s ease;
+}
+.card-hover:hover {
+  transform: translateY(-4px);
+  border-color: rgba(47, 128, 237, 0.45);
+  box-shadow: 0 20px 48px -24px rgba(47, 128, 237, 0.5);
+}
+
+.glass {
+  background: rgba(16, 20, 27, 0.72);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+/* Fixed site header — glassy once scrolled (class toggled on the DOM node). */
+.site-header {
+  border-bottom: 1px solid transparent;
+  transition:
+    background-color 0.3s ease,
+    border-color 0.3s ease,
+    backdrop-filter 0.3s ease;
+}
+.site-header.is-scrolled {
+  background: rgba(11, 18, 32, 0.84);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom-color: var(--color-border);
+}
+
+/* Hairline dividers */
+.divider-brand {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(47, 128, 237, 0.55), transparent);
+}
+.divider-gold {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(245, 185, 66, 0.55), transparent);
+}
+
+/* --------------------------------------------------- signature motifs ----- */
+
+/* Dotted network field — the brand's connection motif. */
+.net-field {
+  background-image: radial-gradient(rgba(148, 163, 184, 0.16) 1px, transparent 1px);
+  background-size: 26px 26px;
+}
+
+.grid-lines {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.028) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.028) 1px, transparent 1px);
+  background-size: 52px 52px;
+}
+
+/* Node dot used in the connection motif */
+.node-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--color-brand);
+  box-shadow: 0 0 0 4px rgba(47, 128, 237, 0.16);
+}
+.node-dot-gold {
+  background: var(--color-gold);
+  box-shadow: 0 0 0 4px rgba(245, 185, 66, 0.16);
+}
+
+/* --------------------------------------------------- scroll reveal -------- */
+
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition:
+    opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: opacity, transform;
+}
+.reveal.is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+/* --------------------------------------------------- reduced motion ------- */
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .reveal {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+  .card-hover:hover {
+    transform: none;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* ------------------------------------------------------- utilities -------- */
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* --------------------------------------------------- CMS prose (markdown) -- */
+
+.prose-at {
+  color: var(--color-muted);
+  line-height: 1.75;
+}
+.prose-at h1,
+.prose-at h2,
+.prose-at h3 {
+  font-family: var(--font-display);
+  color: var(--color-foreground);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  scroll-margin-top: 6rem;
+}
+.prose-at h1 {
+  font-size: 1.875rem;
+  margin: 0 0 1.25rem;
+}
+.prose-at h2 {
+  font-size: 1.5rem;
+  margin: 2.25rem 0 1rem;
+}
+.prose-at h3 {
+  font-size: 1.125rem;
+  margin: 1.75rem 0 0.75rem;
+}
+.prose-at p {
+  margin: 0 0 1.15rem;
+  font-size: 0.975rem;
+}
+.prose-at ul {
+  margin: 0 0 1.15rem 1.25rem;
+  list-style: disc;
+}
+.prose-at li {
+  margin: 0.35rem 0;
+  font-size: 0.975rem;
+}
+.prose-at strong {
+  color: var(--color-foreground);
+  font-weight: 600;
+}
+.prose-at em {
+  color: var(--color-faint);
+}
+.prose-at a {
+  color: var(--color-brand);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.prose-at code {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  background: var(--color-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  padding: 0.1em 0.4em;
+}
+.prose-at > :first-child {
+  margin-top: 0;
+}
