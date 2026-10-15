@@ -124,6 +124,32 @@ export type CreateMessageInput = z.infer<typeof createMessageSchema>;
 export type CreatePostInput = z.infer<typeof createPostSchema>;
 export type CreateCommentInput = z.infer<typeof createCommentSchema>;
 
+/* --------------------------------------------------------------- admin ----- */
+
+/**
+ * A KYC decision. Approval carries no reason; a rejection MUST carry one — the
+ * member sees it, so a bare "rejected" is not an acceptable answer.
+ */
+export const kycDecisionSchema = z
+  .object({
+    decision: z.enum(["VERIFIED", "REJECTED"]),
+    reason: z
+      .string()
+      .trim()
+      .max(2000, "Reason is too long")
+      .or(z.literal(""))
+      .optional(),
+  })
+  .refine(
+    (v) => v.decision !== "REJECTED" || (v.reason ?? "").trim().length >= 3,
+    {
+      message: "Give a reason for the rejection (at least 3 characters)",
+      path: ["reason"],
+    },
+  );
+
+export type KycDecisionInput = z.infer<typeof kycDecisionSchema>;
+
 /** First human-readable message from a Zod error. */
 export function firstError(error: z.ZodError): string {
   return error.issues[0]?.message ?? "Invalid input";

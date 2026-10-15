@@ -7,8 +7,8 @@ const base =
 
 export const buttonVariants = {
   primary:
-    "bg-brand-gradient text-white font-semibold hover:brightness-110 shadow-[0_12px_34px_-14px_rgba(47,128,237,0.85)] hover:shadow-[0_16px_42px_-14px_rgba(47,128,237,0.95)]",
-  gold: "bg-gold-gradient text-[#0b1220] font-semibold hover:brightness-110 shadow-[0_12px_34px_-14px_rgba(245,185,66,0.75)]",
+    "bg-brand-gradient text-[#0e1013] font-semibold hover:brightness-110 shadow-[0_12px_34px_-14px_rgba(195,203,214,0.45)] hover:shadow-[0_16px_42px_-14px_rgba(195,203,214,0.55)]",
+  gold: "bg-gold-gradient text-[#0e1013] font-semibold hover:brightness-110 shadow-[0_12px_34px_-14px_rgba(245,185,66,0.75)]",
   secondary:
     "border border-border-strong bg-elevated text-foreground hover:border-brand/60 hover:text-brand",
   outline: "border border-brand/45 text-brand hover:bg-brand/10",

@@ -99,15 +99,16 @@ community/platform.
 ## 12. Brand colours
 | Role | Name | Hex | Use |
 |------|------|-----|-----|
-| Primary | Electric Blue | `#2F80ED` | Actions, links, primary brand |
+| Primary | Electric Ash | `#C3CBD6` | Actions, links, primary brand |
 | Reward | Amplified Gold | `#F5B942` | Rewards, milestones, emphasis |
-| Base | Deep Navy | `#0B1220` | Page background |
-| Surface | Dark Gray | `#171C26` | Cards / elevated surfaces |
-| Text | White | `#FFFFFF` | Primary text on dark |
+| Base | Ash Black | `#0E1013` | Page background |
+| Surface | Ash Charcoal | `#1A1E24` | Cards / elevated surfaces |
+| Text | White | `#F4F6F8` | Primary text on dark |
 
-Combination: **Navy + Electric Blue + Gold + White** → modern fintech-community
-look. Blue is the **primary** (action); gold is the **reward accent** (achievement),
-never the base.
+Combination: **Ash Black + Electric Ash + Gold + White** → a charged, monochrome
+fintech-community look. Ash is the **primary** (action); gold is the **reward
+accent** (achievement), never the base. The ash is cool and faintly blue-charged
+("electric") — titanium under cold light, not a flat grey.
 
 ## 13. Typography
 - **Display:** Space Grotesk — headings, wordmark, numerals
@@ -149,5 +150,5 @@ Notifications · Profile · Support
 - **Category:** Global Trading & Investment Community
 - **Core offering:** Copy Trading + Investment Packages + Referral/Network + Trader Community
 - **Promise:** Trade. Copy. Connect. Grow.
-- **Colours:** Deep Navy + Electric Blue + Amplified Gold + White
+- **Colours:** Ash Black + Electric Ash + Amplified Gold + White
 - **Core message:** One platform. Amplified opportunity.

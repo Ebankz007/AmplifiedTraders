@@ -22,9 +22,9 @@
 Vitest 5 · pnpm 11.12.0. Dev/start port **3600**. Git repo `main`.
 
 **Design system** (`app/globals.css`, single re-skin point) — a distinct identity:
-- **Colours:** Deep Navy `#0B1220` (background) · **Electric Blue `#2F80ED`** (primary /
-  action) · **Amplified Gold `#F5B942`** (reward accent) · Dark Gray `#171C26` (surface) ·
-  White. Blue is the primary; gold is the reward accent — never the base.
+- **Colours:** Ash Black `#0E1013` (background) · **Electric Ash `#C3CBD6`** (primary /
+  action) · **Amplified Gold `#F5B942`** (reward accent) · Ash Charcoal `#1A1E24` (surface) ·
+  White. Ash is the primary; gold is the reward accent — never the base.
 - **Fonts:** **Space Grotesk** (display) · **Inter** (body) · **JetBrains Mono** (mono).
 - **Signature motif:** the **network field** (connected nodes) — `.net-field`, `.node-dot`.
 
@@ -41,7 +41,7 @@ tests/utils.test.ts
 ```
 
 **Public shell:** `hero` (centred + network ribbon) · `pillars` (asymmetric bento — the
-four AMPLIFY pillars) · `final-cta` (gold-accented band) · `navbar` (pill nav + blue→gold
+four AMPLIFY pillars) · `final-cta` (gold-accented band) · `navbar` (pill nav + ash→gold
 hairline) · `footer` (sub-brand strip + risk notice) · `logo` ("A" mark + wordmark).
 
 ## Phase 2 — done (2026-10-14)

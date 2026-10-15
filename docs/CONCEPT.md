@@ -98,4 +98,4 @@ regulators moved, funds were frozen, and the brand could not outrun the model.
 | 2026-10-14 | **Decision A = no-custody — LOCKED** | Low regulatory risk; determines Invest architecture |
 | 2026-10-14 | Business model locked: $50 registration + $5 platform fee | Anchor for every split/bonus/pool |
 | 2026-10-14 | Build on Next 16 / Prisma 7 / PG16, integer-cents money | Verified stack; fixes Float-money debt |
-| 2026-10-14 | Distinct design identity: Electric Blue + Amplified Gold | One palette per project |
+| 2026-10-14 | Distinct design identity: Electric Ash + Amplified Gold | One palette per project |

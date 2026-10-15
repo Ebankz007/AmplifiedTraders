@@ -16,10 +16,10 @@ export function LogoMark({ className }: { className?: string }) {
       role="img"
     >
       <defs>
-        <linearGradient id="at-blue" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#5b9df3" />
-          <stop offset="50%" stopColor="#2f80ed" />
-          <stop offset="100%" stopColor="#1c5fbf" />
+        <linearGradient id="at-ash" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#dce2ea" />
+          <stop offset="50%" stopColor="#c3cbd6" />
+          <stop offset="100%" stopColor="#9aa4b2" />
         </linearGradient>
         <linearGradient id="at-gold" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#ffd173" />
@@ -33,8 +33,8 @@ export function LogoMark({ className }: { className?: string }) {
         width="38"
         height="38"
         rx="12"
-        fill="#0b1220"
-        stroke="url(#at-blue)"
+        fill="#0e1013"
+        stroke="url(#at-ash)"
         strokeWidth="1.5"
       />
 
@@ -42,7 +42,7 @@ export function LogoMark({ className }: { className?: string }) {
       <path
         d="M11 30 L20 11 L29 30"
         fill="none"
-        stroke="url(#at-blue)"
+        stroke="url(#at-ash)"
         strokeWidth="2.6"
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -58,10 +58,10 @@ export function LogoMark({ className }: { className?: string }) {
 
       {/* Connected network nodes */}
       <circle cx="29.5" cy="14.5" r="2.1" fill="url(#at-gold)" />
-      <circle cx="33" cy="20.5" r="1.5" fill="url(#at-blue)" />
+      <circle cx="33" cy="20.5" r="1.5" fill="url(#at-ash)" />
       <path
         d="M29.5 14.5 L33 20.5"
-        stroke="url(#at-blue)"
+        stroke="url(#at-ash)"
         strokeWidth="1"
         opacity="0.7"
         strokeLinecap="round"

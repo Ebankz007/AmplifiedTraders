@@ -19,9 +19,17 @@ export type AuditInput = {
  * Throws on failure — an audit trail that silently drops entries is worse than
  * no trail, because it looks complete. Callers that must not fail on audit
  * should catch explicitly.
+ *
+ * Pass `client` (the `tx` of a `$transaction` callback) to write the record in
+ * the **same** transaction as the change it describes. A mutation that commits
+ * while its audit row is lost is precisely the silent gap this table exists to
+ * close, so a mutation with side effects should always pass its `tx` here.
  */
-export async function recordAudit(input: AuditInput): Promise<void> {
-  await prisma.auditLog.create({
+export async function recordAudit(
+  input: AuditInput,
+  client: Prisma.TransactionClient | typeof prisma = prisma,
+): Promise<void> {
+  await client.auditLog.create({
     data: {
       adminId: input.adminId ?? null,
       action: input.action,

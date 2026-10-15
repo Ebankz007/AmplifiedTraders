@@ -10,11 +10,15 @@
  * Deliberately NOT seeded here — these need Henry's business input, not invention:
  *   - Packages (non-custodial participation tiers), Brokers, Traders,
  *     Testimonials, FAQ / blog content.
- * Admin / User accounts are deferred to Phase 3 (auth + password hashing).
+ *
+ * The initial administrator IS provisioned here, but only from the environment
+ * (ADMIN_EMAIL / ADMIN_PASSWORD / ADMIN_NAME). Member accounts are never seeded —
+ * they arrive through registration.
  */
 import "dotenv/config";
 import { Prisma, PrismaClient } from "../lib/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
+import { hashPassword } from "../lib/password";
 
 const connectionString = process.env.DATABASE_URL;
 if (!connectionString) {
@@ -89,6 +93,44 @@ const NAV_ITEMS: Array<{
   { id: "nav-footer-cookies", label: "Cookie Policy", url: "/cookies", location: "FOOTER", order: 8 },
 ];
 
+/**
+ * Provision the initial administrator from the environment.
+ *
+ * Idempotent and non-destructive: if an admin with `ADMIN_EMAIL` already exists,
+ * nothing is written — in particular the password is NOT reset, so re-running the
+ * seed can never silently revert a password Henry has since changed. To rotate it,
+ * change it in the console (or delete the row and re-seed).
+ *
+ * Absent env vars are a skip, not a failure: a fresh clone can seed reference data
+ * before anyone has configured an administrator.
+ */
+async function seedAdmin(): Promise<void> {
+  const email = process.env.ADMIN_EMAIL?.trim().toLowerCase();
+  const password = process.env.ADMIN_PASSWORD;
+  const name = process.env.ADMIN_NAME?.trim() || "Amplified Traders Admin";
+
+  if (!email || !password) {
+    console.log("• admin: skipped (set ADMIN_EMAIL + ADMIN_PASSWORD to provision)");
+    return;
+  }
+
+  const existing = await prisma.admin.findUnique({ where: { email } });
+  if (existing) {
+    console.log(`• admin: ${email} already exists (password left unchanged)`);
+    return;
+  }
+
+  await prisma.admin.create({
+    data: {
+      email,
+      name,
+      role: "SUPER_ADMIN",
+      passwordHash: await hashPassword(password),
+    },
+  });
+  console.log(`✓ admin: created ${email} (SUPER_ADMIN)`);
+}
+
 async function main(): Promise<void> {
   // 1. Bonus pools — the engine accrues into these; they must exist.
   for (const kind of ["RANK", "LEADERSHIP"] as const) {
@@ -124,6 +166,9 @@ async function main(): Promise<void> {
     });
   }
   console.log(`✓ navigation items (${NAV_ITEMS.length})`);
+
+  // 4. Initial administrator (env-driven; skipped when unset).
+  await seedAdmin();
 }
 
 main()

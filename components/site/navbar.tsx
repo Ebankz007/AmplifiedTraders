@@ -32,7 +32,7 @@ export function Navbar() {
 
   return (
     <header ref={headerRef} className="site-header fixed inset-x-0 top-0 z-50">
-      {/* Signature accent hairline (blue → gold) */}
+      {/* Signature accent hairline (ash → gold) */}
       <div
         className="h-px w-full bg-gradient-to-r from-transparent via-brand/70 to-gold/60"
         aria-hidden="true"

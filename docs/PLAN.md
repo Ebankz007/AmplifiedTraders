@@ -29,7 +29,7 @@ compensation engine into `lib/engine`. ~60% of proven, tested machinery reused. 
 | Phase | Scope | Acceptance criteria |
 |---|---|---|
 | **0. Audit + plan** | This document set | ✅ Done — awaiting approval |
-| **1. Scaffold + design system** | Next 16 + TS + Tailwind; brand tokens (Navy `#0B1220`/Gold `#D4A72C`/Emerald `#18A66A`); typography; layout; component primitives; logo mark | `typecheck` clean; tokens applied; primitives documented |
+| **1. Scaffold + design system** | Next 16 + TS + Tailwind; brand tokens (Ash Black `#0E1013`/Electric Ash `#C3CBD6`/Gold `#F5B942`); typography; layout; component primitives; logo mark | `typecheck` clean; tokens applied; primitives documented |
 | **2. Database + engine** | Prisma schema (all modules); migration; idempotent seed; **port engine** to `lib/engine`; **integer-cents money** | ✅ Done 2026-10-14 — migration applies; seed reproducible; 88 engine tests green; no `Float` |
 | **3. Auth + RBAC** | Admin/user sessions; register/login/reset; email verify; RBAC matrix (6 roles); rate limiting; MFA scaffold | ✅ Done 2026-10-14 — auth E2E verified live; RBAC tests green; **MFA scaffold deferred to Phase 8** |
 | **4. Client portal** | Dashboard, portfolio, copy, packages, network, wallet, transactions, community, notifications, settings, KYC, support | All journeys from register → primary op verified with real sessions |
