@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { formatDateTime } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 
 export const metadata = { title: "Notifications" };
@@ -64,13 +65,7 @@ export default async function NotificationsPage() {
                         </p>
                       )}
                       <p className="mt-2 text-xs text-faint">
-                        {n.createdAt.toLocaleDateString("en-US", {
-                          year: "numeric",
-                          month: "short",
-                          day: "numeric",
-                          hour: "numeric",
-                          minute: "2-digit",
-                        })}
+                        {formatDateTime(n.createdAt)}
                       </p>
                     </div>
                     <div className="shrink-0 space-y-2 text-right">

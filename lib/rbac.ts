@@ -90,6 +90,7 @@ export function requirePermission(role: AdminRole, permission: Permission): void
 export const ADMIN_AREA_PERMISSIONS: Record<string, Permission> = {
   users: "users",
   kyc: "kyc",
+  support: "messages",
   deposits: "deposits",
   withdrawals: "withdrawals",
   packages: "packages",

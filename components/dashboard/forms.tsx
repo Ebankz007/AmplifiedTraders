@@ -9,6 +9,12 @@ import {
   FormError,
   FormNotice,
 } from "@/components/auth/form-field";
+import {
+  SUPPORT_CATEGORIES,
+  SUPPORT_CATEGORY_LABELS,
+  SUPPORT_PRIORITIES,
+  SUPPORT_PRIORITY_LABELS,
+} from "@/lib/support";
 
 /** Client-side mirror of `createTicketSchema` — the server re-validates anyway. */
 export function SupportForm() {
@@ -62,12 +68,11 @@ export function SupportForm() {
             onChange={(e) => setCategory(e.target.value)}
             className="h-11 w-full rounded-xl border border-border bg-elevated px-3.5 text-sm text-foreground focus:border-brand/60 focus:outline-none focus:ring-2 focus:ring-brand/25"
           >
-            <option value="GENERAL">General</option>
-            <option value="ACCOUNT">Account</option>
-            <option value="PAYMENTS">Payments</option>
-            <option value="COPY_TRADING">Copy trading</option>
-            <option value="NETWORK">Referral network</option>
-            <option value="TECHNICAL">Technical issue</option>
+            {SUPPORT_CATEGORIES.map((value) => (
+              <option key={value} value={value}>
+                {SUPPORT_CATEGORY_LABELS[value]}
+              </option>
+            ))}
           </select>
         </label>
 
@@ -80,10 +85,11 @@ export function SupportForm() {
             onChange={(e) => setPriority(e.target.value)}
             className="h-11 w-full rounded-xl border border-border bg-elevated px-3.5 text-sm text-foreground focus:border-brand/60 focus:outline-none focus:ring-2 focus:ring-brand/25"
           >
-            <option value="LOW">Low</option>
-            <option value="NORMAL">Normal</option>
-            <option value="HIGH">High</option>
-            <option value="URGENT">Urgent</option>
+            {SUPPORT_PRIORITIES.map((value) => (
+              <option key={value} value={value}>
+                {SUPPORT_PRIORITY_LABELS[value]}
+              </option>
+            ))}
           </select>
         </label>
       </div>

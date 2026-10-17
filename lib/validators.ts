@@ -2,6 +2,7 @@ import { z } from "zod";
 import { MAX_PASSWORD_BYTES } from "@/lib/password";
 import { MEMBER_STATUS_ACTIONS } from "@/lib/member-status";
 import { ADMIN_ROLES } from "@/lib/admin-team";
+import { SUPPORT_PRIORITIES, SUPPORT_STATUSES } from "@/lib/support";
 
 /** Normalise (trim + lowercase) then validate. Stored emails are always lowercase. */
 export const emailSchema = z
@@ -193,6 +194,22 @@ export const updateSettingSchema = z.object({
 });
 
 export type UpdateSettingInput = z.infer<typeof updateSettingSchema>;
+
+/**
+ * A staff change to a ticket's status and/or priority. Both are optional, but a
+ * request that changes neither is rejected — an empty PATCH would write an audit
+ * row recording nothing.
+ */
+export const updateTicketSchema = z
+  .object({
+    status: z.enum(SUPPORT_STATUSES).optional(),
+    priority: z.enum(SUPPORT_PRIORITIES).optional(),
+  })
+  .refine((data) => data.status !== undefined || data.priority !== undefined, {
+    message: "Nothing to update",
+  });
+
+export type UpdateTicketInput = z.infer<typeof updateTicketSchema>;
 
 /** First human-readable message from a Zod error. */
 export function firstError(error: z.ZodError): string {

@@ -36,6 +36,12 @@ export const adminNavItems: AdminNavItem[] = [
     permission: "kyc",
   },
   {
+    href: "/admin/support",
+    label: "Support",
+    description: "Member tickets and replies",
+    permission: "messages",
+  },
+  {
     href: "/admin/audit",
     label: "Audit log",
     description: "Sensitive admin actions",

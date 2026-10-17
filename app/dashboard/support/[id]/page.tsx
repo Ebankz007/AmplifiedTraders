@@ -2,9 +2,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { formatDate, formatDateTime } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MessageForm } from "@/components/dashboard/forms";
+import { SUPPORT_STATUS_LABELS, categoryLabel } from "@/lib/support";
 
 export const metadata = { title: "Ticket" };
 
@@ -49,12 +51,12 @@ export default async function TicketPage({
             {ticket.subject}
           </h1>
           <Badge variant={statusVariant[ticket.status] ?? "outline"}>
-            {ticket.status}
+            {SUPPORT_STATUS_LABELS[ticket.status]}
           </Badge>
         </div>
         <p className="mt-1 text-xs text-faint">
-          {ticket.category.replace("_", " ")} · priority {ticket.priority.toLowerCase()} ·
-          opened {ticket.createdAt.toLocaleDateString("en-US", { dateStyle: "long" })}
+          {categoryLabel(ticket.category)} · priority{" "}
+          {ticket.priority.toLowerCase()} · opened {formatDate(ticket.createdAt)}
         </p>
       </div>
 
@@ -75,10 +77,7 @@ export default async function TicketPage({
                       </Badge>
                     </div>
                     <time className="text-xs text-faint">
-                      {message.createdAt.toLocaleDateString("en-US", {
-                        dateStyle: "medium",
-                        timeStyle: "short",
-                      })}
+                      {formatDateTime(message.createdAt)}
                     </time>
                   </div>
                   <p className="whitespace-pre-wrap text-sm text-muted">{message.body}</p>

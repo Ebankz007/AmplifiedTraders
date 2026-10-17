@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { adminNavItems, visibleAdminNav } from "@/components/admin/nav-items";
-import { hasPermission } from "@/lib/rbac";
+import { hasPermission, permissionForAdminPath } from "@/lib/rbac";
 import type { AdminRole } from "@/lib/generated/prisma/enums";
 
 const ROLES: AdminRole[] = [
@@ -104,5 +104,26 @@ describe("admin nav", () => {
 
   it("returns nothing for an unknown role", () => {
     expect(visibleAdminNav("NOPE" as AdminRole)).toEqual([]);
+  });
+
+  it("agrees with the RBAC area map about every nav item", () => {
+    // Two modules describing the same door: the nav's `permission` and
+    // `ADMIN_AREA_PERMISSIONS`. If they disagree, the sidebar advertises an area
+    // the path guard would refuse (or vice versa). Asserting the agreement in
+    // both directions is the only way it stays true (lesson 210).
+    for (const item of adminNavItems) {
+      expect(permissionForAdminPath(item.href)).toBe(item.permission);
+    }
+  });
+
+  it("shows Support to the roles that hold the messages permission", () => {
+    for (const role of ROLES) {
+      const labels = visibleAdminNav(role).map((item) => item.label);
+      if (hasPermission(role, "messages")) {
+        expect(labels).toContain("Support");
+      } else {
+        expect(labels).not.toContain("Support");
+      }
+    }
   });
 });
