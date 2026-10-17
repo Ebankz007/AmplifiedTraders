@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { MAX_PASSWORD_BYTES } from "@/lib/password";
 import { MEMBER_STATUS_ACTIONS } from "@/lib/member-status";
+import { ADMIN_ROLES } from "@/lib/admin-team";
 
 /** Normalise (trim + lowercase) then validate. Stored emails are always lowercase. */
 export const emailSchema = z
@@ -160,6 +161,27 @@ export const memberStatusSchema = z.object({
 });
 
 export type MemberStatusInput = z.infer<typeof memberStatusSchema>;
+
+/** Provision a new admin. The password must satisfy the full policy. */
+export const createAdminSchema = z.object({
+  name: z.string().trim().min(2, "Enter a name").max(120),
+  email: emailSchema,
+  role: z.enum(ADMIN_ROLES),
+  password: passwordSchema,
+});
+
+/** Update an admin's role and/or active flag. At least one field is required. */
+export const updateAdminSchema = z
+  .object({
+    role: z.enum(ADMIN_ROLES).optional(),
+    isActive: z.boolean().optional(),
+  })
+  .refine((v) => v.role !== undefined || v.isActive !== undefined, {
+    message: "Nothing to update",
+  });
+
+export type CreateAdminInput = z.infer<typeof createAdminSchema>;
+export type UpdateAdminInput = z.infer<typeof updateAdminSchema>;
 
 /** First human-readable message from a Zod error. */
 export function firstError(error: z.ZodError): string {

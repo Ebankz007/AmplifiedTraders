@@ -41,6 +41,12 @@ export const adminNavItems: AdminNavItem[] = [
     description: "Sensitive admin actions",
     permission: "audit",
   },
+  {
+    href: "/admin/team",
+    label: "Team",
+    description: "Admin accounts and roles",
+    permission: "team",
+  },
 ];
 
 /**

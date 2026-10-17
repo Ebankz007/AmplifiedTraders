@@ -63,8 +63,23 @@ describe("admin nav", () => {
     );
   });
 
-  it("gives every role the Overview (dashboard permission)", () => {
-    for (const role of ROLES) {
+  it("hides the Team from every role but SUPER_ADMIN", () => {
+    for (const role of [
+      "CONTENT_ADMIN",
+      "SUPPORT_ADMIN",
+      "FINANCE_ADMIN",
+      "NETWORK_ADMIN",
+      "TRADER_ADMIN",
+    ] as AdminRole[]) {
+      const labels = visibleAdminNav(role).map((item) => item.label);
+      expect(labels).not.toContain("Team");
+    }
+    expect(visibleAdminNav("SUPER_ADMIN").map((item) => item.label)).toContain(
+      "Team",
+    );
+  });
+
+  it("gives every role the Overview (dashboard permission)", () => {    for (const role of ROLES) {
       const labels = visibleAdminNav(role).map((item) => item.label);
       expect(labels).toContain("Overview");
     }
