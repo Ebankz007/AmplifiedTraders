@@ -19,6 +19,7 @@ import "dotenv/config";
 import { Prisma, PrismaClient } from "../lib/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { hashPassword } from "../lib/password";
+import { SETTING_DEFAULTS } from "../lib/site-settings";
 
 const connectionString = process.env.DATABASE_URL;
 if (!connectionString) {
@@ -29,43 +30,16 @@ if (!connectionString) {
 
 const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString }) });
 
-const SITE_SETTINGS: Array<{ key: string; value: Prisma.InputJsonValue }> = [
-  {
-    key: "site.identity",
-    value: {
-      name: "Amplified Traders",
-      shortName: "Amplified",
-      tagline: "Your Trading. Your Network. Amplified.",
-      domain: "amplifiedtraders.com",
-    },
-  },
-  {
-    key: "site.contact",
-    value: {
-      email: "hello@amplifiedtraders.com",
-      supportEmail: "support@amplifiedtraders.com",
-      phone: "",
-      address: "",
-    },
-  },
-  {
-    key: "site.compliance",
-    value: {
-      riskNotice:
-        "Trading involves substantial risk and is not suitable for every investor. " +
-        "Past performance is not indicative of future results. Amplified Traders is a " +
-        "software and community platform: it does not hold client funds and does not " +
-        "provide investment advice.",
-      custodyDisclosure:
-        "Amplified Traders never takes custody of client funds. Copying is executed " +
-        "manually on your own broker account.",
-    },
-  },
-  {
-    key: "site.social",
-    value: { links: [] },
-  },
-];
+/**
+ * The setting keys and their seed values, derived from the single allowlist in
+ * `lib/site-settings.ts` — never re-listed here, so the seed cannot provision a
+ * key the settings API would refuse to write (or miss one it would accept).
+ */
+const SITE_SETTINGS: Array<{ key: string; value: Prisma.InputJsonValue }> =
+  Object.entries(SETTING_DEFAULTS).map(([key, value]) => ({
+    key,
+    value: value as Prisma.InputJsonValue,
+  }));
 
 const NAV_ITEMS: Array<{
   id: string;
@@ -142,15 +116,29 @@ async function main(): Promise<void> {
   }
   console.log("✓ bonus pools (RANK, LEADERSHIP)");
 
-  // 2. Site settings.
+  // 2. Site settings — create-if-absent, never reset.
+  //
+  // `update: { value }` looks harmless and silently reverts every setting an
+  // admin has edited in the console on the next `db:seed` — the same footgun as
+  // resetting the admin password (lesson 191). The seed provisions the *keys*;
+  // the console owns the *values*. To push a changed default into a live
+  // database, do it deliberately, never as a side effect of seeding.
+  let settingsCreated = 0;
   for (const setting of SITE_SETTINGS) {
-    await prisma.siteSetting.upsert({
+    const existing = await prisma.siteSetting.findUnique({
       where: { key: setting.key },
-      update: { value: setting.value },
-      create: { key: setting.key, value: setting.value },
+      select: { key: true },
     });
+    if (existing) continue;
+
+    await prisma.siteSetting.create({
+      data: { key: setting.key, value: setting.value },
+    });
+    settingsCreated += 1;
   }
-  console.log(`✓ site settings (${SITE_SETTINGS.length})`);
+  console.log(
+    `✓ site settings (${settingsCreated} created, ${SITE_SETTINGS.length - settingsCreated} already present)`,
+  );
 
   // 3. Navigation.
   for (const item of NAV_ITEMS) {

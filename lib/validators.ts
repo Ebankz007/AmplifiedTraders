@@ -183,6 +183,17 @@ export const updateAdminSchema = z
 export type CreateAdminInput = z.infer<typeof createAdminSchema>;
 export type UpdateAdminInput = z.infer<typeof updateAdminSchema>;
 
+/**
+ * A site-setting write. Only the envelope is checked here — the value's shape is
+ * validated against its definition in `lib/site-settings.ts`, which is also the
+ * allowlist that decides whether the key may be written at all.
+ */
+export const updateSettingSchema = z.object({
+  value: z.record(z.string(), z.unknown()),
+});
+
+export type UpdateSettingInput = z.infer<typeof updateSettingSchema>;
+
 /** First human-readable message from a Zod error. */
 export function firstError(error: z.ZodError): string {
   return error.issues[0]?.message ?? "Invalid input";

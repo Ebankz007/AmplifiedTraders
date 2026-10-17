@@ -47,6 +47,12 @@ export const adminNavItems: AdminNavItem[] = [
     description: "Admin accounts and roles",
     permission: "team",
   },
+  {
+    href: "/admin/settings",
+    label: "Settings",
+    description: "Site copy and contact details",
+    permission: "settings",
+  },
 ];
 
 /**
