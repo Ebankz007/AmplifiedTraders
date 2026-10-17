@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { MAX_PASSWORD_BYTES } from "@/lib/password";
+import { MEMBER_STATUS_ACTIONS } from "@/lib/member-status";
 
 /** Normalise (trim + lowercase) then validate. Stored emails are always lowercase. */
 export const emailSchema = z
@@ -149,6 +150,16 @@ export const kycDecisionSchema = z
   );
 
 export type KycDecisionInput = z.infer<typeof kycDecisionSchema>;
+
+/**
+ * A member account-status action. The payload names the intent, never the
+ * target status — `memberStatusTransition` derives that on the server.
+ */
+export const memberStatusSchema = z.object({
+  action: z.enum(MEMBER_STATUS_ACTIONS),
+});
+
+export type MemberStatusInput = z.infer<typeof memberStatusSchema>;
 
 /** First human-readable message from a Zod error. */
 export function firstError(error: z.ZodError): string {

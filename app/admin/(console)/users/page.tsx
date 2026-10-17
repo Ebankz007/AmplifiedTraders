@@ -144,10 +144,15 @@ export default async function AdminUsersPage({
                   {members.map((member) => (
                     <tr key={member.id} className="transition-colors hover:bg-elevated/50">
                       <td className="px-5 py-3">
-                        <p className="font-medium text-foreground">
-                          {member.fullName}
-                        </p>
-                        <p className="text-xs text-faint">{member.email}</p>
+                        <Link
+                          href={`/admin/users/${member.id}`}
+                          className="group block"
+                        >
+                          <p className="font-medium text-foreground group-hover:text-brand">
+                            {member.fullName}
+                          </p>
+                          <p className="text-xs text-faint">{member.email}</p>
+                        </Link>
                       </td>
                       <td className="px-5 py-3">
                         <Badge variant="outline">{roleLabel[member.role]}</Badge>
