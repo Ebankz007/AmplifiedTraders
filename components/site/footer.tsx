@@ -1,43 +1,39 @@
 import Link from "next/link";
-import { Logo } from "./logo";
+import { Logo } from "@/components/site/logo";
+import { SUBBRANDS, FOOTER_PLATFORM, FOOTER_COMPANY, FOOTER_LEGAL } from "@/lib/navigation";
 
-const SUBBRANDS = [
-  { label: "Amplify Trade", href: "/copy-trading" },
-  { label: "Amplify Invest", href: "/packages" },
-  { label: "Amplify Network", href: "/network" },
-  { label: "Amplify Community", href: "/community" },
-];
-
-const PLATFORM = [
-  { label: "Copy Trading", href: "/copy-trading" },
-  { label: "Investment Packages", href: "/packages" },
-  { label: "Traders", href: "/traders" },
-  { label: "Referral Network", href: "/network" },
-  { label: "Community", href: "/community" },
-  { label: "Education", href: "/education" },
-];
-
-const COMPANY = [
-  { label: "About Us", href: "/about" },
-  { label: "Contact", href: "/contact" },
-  { label: "FAQ", href: "/faq" },
-  { label: "Blog", href: "/blog" },
-  { label: "Login", href: "/login" },
-  { label: "Join Now", href: "/register" },
-];
-
-const LEGAL = [
-  { label: "Risk Disclosure", href: "/legal/risk-disclosure" },
-  { label: "Terms of Service", href: "/legal/terms" },
-  { label: "Privacy Policy", href: "/legal/privacy" },
-  { label: "Cookie Policy", href: "/legal/cookies" },
-];
+function FooterColumn({
+  title,
+  links,
+}: {
+  title: string;
+  links: readonly { label: string; href: string }[];
+}) {
+  return (
+    <div>
+      <h3 className="font-display text-sm font-semibold uppercase tracking-wider text-foreground">
+        {title}
+      </h3>
+      <ul className="mt-4 space-y-2.5">
+        {links.map((link) => (
+          <li key={link.href}>
+            <Link
+              href={link.href}
+              className="text-sm text-muted transition-colors hover:text-brand"
+            >
+              {link.label}
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
 
 export function Footer() {
   const year = new Date().getFullYear();
   return (
     <footer className="border-t border-border bg-surface">
-      {/* Sub-brand strip — the signature brand architecture */}
       <div className="border-b border-border">
         <div className="mx-auto grid max-w-7xl grid-cols-2 gap-px overflow-hidden px-4 sm:px-6 lg:grid-cols-4 lg:px-8">
           {SUBBRANDS.map((b) => (
@@ -67,9 +63,9 @@ export function Footer() {
             </p>
           </div>
 
-          <FooterColumn title="Platform" links={PLATFORM} />
-          <FooterColumn title="Company" links={COMPANY} />
-          <FooterColumn title="Legal" links={LEGAL} />
+          <FooterColumn title="Platform" links={FOOTER_PLATFORM} />
+          <FooterColumn title="Company" links={FOOTER_COMPANY} />
+          <FooterColumn title="Legal" links={FOOTER_LEGAL} />
         </div>
 
         <div className="mt-12 rounded-xl border border-border bg-card p-4">
@@ -90,33 +86,5 @@ export function Footer() {
         </div>
       </div>
     </footer>
-  );
-}
-
-function FooterColumn({
-  title,
-  links,
-}: {
-  title: string;
-  links: { label: string; href: string }[];
-}) {
-  return (
-    <div>
-      <h3 className="font-display text-sm font-semibold uppercase tracking-wider text-foreground">
-        {title}
-      </h3>
-      <ul className="mt-4 space-y-2.5">
-        {links.map((link) => (
-          <li key={link.href}>
-            <Link
-              href={link.href}
-              className="text-sm text-muted transition-colors hover:text-brand"
-            >
-              {link.label}
-            </Link>
-          </li>
-        ))}
-      </ul>
-    </div>
   );
 }
