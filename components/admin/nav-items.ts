@@ -42,6 +42,18 @@ export const adminNavItems: AdminNavItem[] = [
     permission: "messages",
   },
   {
+    href: "/admin/deposits",
+    label: "Deposits",
+    description: "Confirm incoming funds",
+    permission: "deposits",
+  },
+  {
+    href: "/admin/withdrawals",
+    label: "Withdrawals",
+    description: "Approve or reject payouts",
+    permission: "withdrawals",
+  },
+  {
     href: "/admin/audit",
     label: "Audit log",
     description: "Sensitive admin actions",

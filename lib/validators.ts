@@ -3,6 +3,7 @@ import { MAX_PASSWORD_BYTES } from "@/lib/password";
 import { MEMBER_STATUS_ACTIONS } from "@/lib/member-status";
 import { ADMIN_ROLES } from "@/lib/admin-team";
 import { SUPPORT_PRIORITIES, SUPPORT_STATUSES } from "@/lib/support";
+import { PAYOUT_METHODS } from "@/lib/payout";
 
 /** Normalise (trim + lowercase) then validate. Stored emails are always lowercase. */
 export const emailSchema = z
@@ -210,6 +211,85 @@ export const updateTicketSchema = z
   });
 
 export type UpdateTicketInput = z.infer<typeof updateTicketSchema>;
+
+/* --------------------------------------------------------------- wallet ----- */
+
+/**
+ * A member's withdrawal request. `amount` is a string so the form can send what
+ * the user typed; the route parses it to integer cents with `parseAmountToCents`,
+ * which rejects sub-cent precision rather than rounding it away.
+ */
+export const withdrawalRequestSchema = z.object({
+  amount: z.string().trim().min(1, "Enter an amount"),
+  method: z.enum(PAYOUT_METHODS).default("BANK_TRANSFER"),
+  destination: z
+    .string()
+    .trim()
+    .max(120, "Destination is too long")
+    .or(z.literal(""))
+    .optional(),
+  details: z
+    .string()
+    .trim()
+    .max(1000, "Details are too long")
+    .or(z.literal(""))
+    .optional(),
+});
+
+export type WithdrawalRequestInput = z.infer<typeof withdrawalRequestSchema>;
+
+/** A member's deposit intent — the amount they want credited, plus a reference. */
+export const depositRequestSchema = z.object({
+  amount: z.string().trim().min(1, "Enter an amount"),
+  method: z.enum(PAYOUT_METHODS).default("CRYPTO"),
+  reference: z
+    .string()
+    .trim()
+    .max(160, "Reference is too long")
+    .or(z.literal(""))
+    .optional(),
+});
+
+export type DepositRequestInput = z.infer<typeof depositRequestSchema>;
+
+/**
+ * An operator's decision on a payout. A rejection MUST carry a reason — the
+ * member sees it on the returned funds, so a bare "rejected" is not an answer.
+ */
+export const payoutDecisionSchema = z
+  .object({
+    action: z.enum(["approve", "reject", "mark_paid"]),
+    reason: z
+      .string()
+      .trim()
+      .max(2000, "Reason is too long")
+      .or(z.literal(""))
+      .optional(),
+  })
+  .refine((v) => v.action !== "reject" || (v.reason ?? "").trim().length >= 3, {
+    message: "Give a reason for the rejection (at least 3 characters)",
+    path: ["reason"],
+  });
+
+export type PayoutDecisionInput = z.infer<typeof payoutDecisionSchema>;
+
+/** An operator's decision on a deposit. A rejection must carry a reason. */
+export const depositDecisionSchema = z
+  .object({
+    action: z.enum(["confirm", "reject"]),
+    reason: z
+      .string()
+      .trim()
+      .max(2000, "Reason is too long")
+      .or(z.literal(""))
+      .optional(),
+  })
+  .refine((v) => v.action !== "reject" || (v.reason ?? "").trim().length >= 3, {
+    message: "Give a reason for the rejection (at least 3 characters)",
+    path: ["reason"],
+  });
+
+export type DepositDecisionInput = z.infer<typeof depositDecisionSchema>;
 
 /** First human-readable message from a Zod error. */
 export function firstError(error: z.ZodError): string {
