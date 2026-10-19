@@ -1,4 +1,4 @@
-import { Building2, Globe, CheckCircle2 } from "lucide-react";
+import { Building2, Globe } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Prose } from "@/components/site/prose";
 
@@ -21,7 +21,7 @@ export function BrokerCard({ broker }: { broker: BrokerCardData }) {
             {broker.name}
           </h3>
         </div>
-        <CheckCircle2 className="h-5 w-5 text-gold" aria-hidden="true" />
+        <Building2 className="h-5 w-5 text-faint" aria-hidden="true" />
       </div>
 
       {broker.description ? (
@@ -30,7 +30,8 @@ export function BrokerCard({ broker }: { broker: BrokerCardData }) {
         </div>
       ) : (
         <p className="mt-3 text-sm text-muted">
-          A trusted execution venue for copy-trading participation.
+          A venue you may already hold an account with. Connect it from your
+          dashboard; your capital stays there.
         </p>
       )}
 

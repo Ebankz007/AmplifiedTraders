@@ -143,6 +143,7 @@ export async function getPackages() {
       id: true,
       slug: true,
       name: true,
+      tier: true,
       summary: true,
       minCents: true,
       maxCents: true,

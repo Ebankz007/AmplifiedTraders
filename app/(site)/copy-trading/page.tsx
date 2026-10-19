@@ -60,8 +60,12 @@ export default async function CopyTradingPage() {
       {brokers.length > 0 && (
         <Section>
           <div className="max-w-2xl">
-            <h2 className="font-display text-2xl font-bold tracking-tight">Supported Brokers</h2>
-            <p className="mt-2 text-muted">Execution venues used for copy-trading participation.</p>
+            <h2 className="font-display text-2xl font-bold tracking-tight">Broker Connections</h2>
+            <p className="mt-2 text-muted">
+              Amplified Traders is non-custodial. You connect an account you already hold with one of
+              these venues — your capital stays with them, never with us. Naming a venue here is not a
+              partnership claim; confirm availability during onboarding.
+            </p>
           </div>
           <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {brokers.map((b) => (
