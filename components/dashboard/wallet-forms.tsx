@@ -11,6 +11,8 @@ import {
   depositGrossCents,
   PAYOUT_METHODS,
   PAYOUT_METHOD_LABELS,
+  RAIL_CURRENCY,
+  usdCentsToRail,
   WITHDRAWAL_MIN_CENTS,
 } from "@/lib/payout";
 import { PLATFORM_FEE_CENTS } from "@/lib/engine/constants";
@@ -244,17 +246,27 @@ export function DepositForm() {
       {preview && preview.ok && (
         <div className="rounded-xl border border-border bg-elevated px-4 py-3 text-sm">
           <div className="flex items-center justify-between">
-            <span className="text-faint">You send</span>
-            <span className="font-mono text-foreground">
-              {formatCents(depositGrossCents(parseAmountToCents(amount)))}
+            <span className="text-faint">Credited to your wallet</span>
+            <span className="font-display font-bold text-foreground">
+              {formatCents(preview.net)}
             </span>
           </div>
           <div className="mt-1 flex items-center justify-between">
-            <span className="text-faint">Credited to your wallet</span>
-            <span className="font-mono text-gold">
-              {formatCents(parseAmountToCents(amount))}
+            <span className="text-faint">Platform fee</span>
+            <span className="text-muted">{formatCents(PLATFORM_FEE_CENTS)}</span>
+          </div>
+          <div className="mt-1 flex items-center justify-between border-t border-border pt-2">
+            <span className="text-foreground">Total to send</span>
+            <span className="font-display font-bold text-gold">
+              {formatCents(preview.gross)}
             </span>
           </div>
+          {method === "CRYPTO" && (
+            <p className="mt-2 text-xs leading-relaxed text-faint">
+              Send {formatCents(usdCentsToRail(preview.gross), RAIL_CURRENCY)}.
+              USDT is credited at par — 1 USDT = 1 USD.
+            </p>
+          )}
         </div>
       )}
 

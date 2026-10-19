@@ -16,6 +16,10 @@ import {
   PAYOUT_STATUSES,
   payoutHoldKey,
   payoutRefundKey,
+  RAIL_CURRENCY,
+  USDT_USD_PARITY,
+  usdCentsToRail,
+  usdtToUsdCents,
   WALLET_CURRENCY,
   WITHDRAWAL_MIN_CENTS,
 } from "@/lib/payout";
@@ -277,5 +281,33 @@ describe("withdrawal minimum is a real floor", () => {
 
   it("refuses one cent below the minimum at a large balance", () => {
     expect(canWithdraw(10_000_000, WITHDRAWAL_MIN_CENTS - 1).ok).toBe(false);
+  });
+});
+
+describe("the USDT/USD peg is a stated policy, not an accident", () => {
+  it("is pinned at 1:1 — changing it must be a deliberate edit to this test", () => {
+    expect(USDT_USD_PARITY).toBe(1);
+  });
+
+  it("credits a USDT amount to the wallet at par", () => {
+    expect(usdtToUsdCents(5000)).toBe(5000);
+    expect(usdtToUsdCents(1)).toBe(1);
+    expect(usdtToUsdCents(0)).toBe(0);
+  });
+
+  it("round-trips a wallet amount through the rail unchanged at parity", () => {
+    for (const cents of [5000, 5500, 123_456, 1]) {
+      expect(usdtToUsdCents(usdCentsToRail(cents))).toBe(cents);
+    }
+  });
+
+  it("keeps the wallet in USD and the rail in USDT — two currencies, two names", () => {
+    expect(WALLET_CURRENCY).toBe("USD");
+    expect(RAIL_CURRENCY).toBe("USDT");
+    expect(WALLET_CURRENCY).not.toBe(RAIL_CURRENCY);
+  });
+
+  it("refuses a non-integer rail amount rather than rounding silently", () => {
+    expect(() => usdtToUsdCents(10.5)).toThrow();
   });
 });

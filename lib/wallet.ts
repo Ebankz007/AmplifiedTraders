@@ -37,6 +37,7 @@ import {
   depositNetCents,
   payoutHoldKey,
   payoutRefundKey,
+  usdCentsToRail,
   WALLET_CURRENCY,
 } from "@/lib/payout";
 import type { Prisma } from "@/lib/generated/prisma/client";
@@ -398,7 +399,7 @@ export async function requestDeposit(input: {
 
   const gross = depositGrossCents(net);
 
-  return prisma.payment.create({
+  const payment = await prisma.payment.create({
     data: {
       userId: input.userId,
       purpose: "DEPOSIT",
@@ -411,6 +412,11 @@ export async function requestDeposit(input: {
     },
     select: { id: true, amountCents: true, platformFeeCents: true, status: true },
   });
+
+  // The member pays over the rail (USDT) at the stated parity; the wallet is
+  // credited in USD. Kept as its own field so the two numbers can diverge the
+  // day the peg is renegotiated, without a hunt through the deposit path.
+  return { ...payment, railAmount: usdCentsToRail(gross) };
 }
 
 /**

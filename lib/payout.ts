@@ -34,13 +34,41 @@ import type {
 /* ------------------------------------------------------------- currency ---- */
 
 /**
- * The wallet, the ledger and every payout are denominated in USD. The payment
- * rail's own default is USDT; the deposit writer sets the currency explicitly so
- * a pegged-crypto charge is never silently recorded as USD by omission. Whether
- * the rail should credit 1:1 against USDT is a business decision, not a code
- * one — see `docs/` and the open question in state.
+ * The wallet, the ledger and every payout are denominated in USD.
  */
 export const WALLET_CURRENCY = "USD";
+
+/** The currency the deposit rail is settled in. */
+export const RAIL_CURRENCY = "USDT";
+
+/**
+ * The rail credits USDT to the USD wallet **at par** — 1 USDT = 1 USD.
+ *
+ * This is a stated business policy, not a fact about the world: a stablecoin
+ * peg is an assumption, and the day it stops holding this is the one line that
+ * changes. It is a named constant with a function rather than a comment so the
+ * assumption is *executable* — `usdtToUsdCents(5000) === 5000` is a claim a test
+ * can fail, and a silent drift from 1 becomes a red test instead of a rounding
+ * error discovered in a reconciliation.
+ */
+export const USDT_USD_PARITY = 1;
+
+/**
+ * Convert a USDT amount (in minor units — cents, as the rail reports them) to
+ * the USD cents credited to the wallet, at the stated parity.
+ */
+export function usdtToUsdCents(usdtMinorUnits: number): number {
+  return Math.round(assertIntegerCents(usdtMinorUnits) * USDT_USD_PARITY);
+}
+
+/**
+ * The amount a member must send over the rail to fund `usdCents` in the wallet.
+ * Identity today (parity 1), but it is the *rail's* number, kept separate from
+ * the wallet's so the two can diverge without a hunt through the codebase.
+ */
+export function usdCentsToRail(usdCents: number): number {
+  return assertIntegerCents(usdCents);
+}
 
 /* ---------------------------------------------------------------- limits --- */
 
