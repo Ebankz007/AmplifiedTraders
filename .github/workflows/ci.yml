@@ -1,0 +1,86 @@
+name: CI
+
+# The gate. A commit that is not green here is never deployed: the server's
+# deploy script refuses a red commit (infrastructure/deploy/deploy.sh).
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: typecheck · lint · test · build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.12.0
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate the Prisma client
+        run: pnpm db:generate
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Test
+        run: pnpm test
+
+      # The marketing pages and the blog post routes are PRERENDERED at build
+      # time from the database, so the build needs a live Postgres with the
+      # schema and the seeded content. CI spins up one and seeds it.
+      - name: Start PostgreSQL
+        uses: postgres:16
+        with:
+          postgres-password: postgres
+          postgres-user: postgres
+          postgres-db: amplifiedtraders_ci
+
+      - name: Apply the schema
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/amplifiedtraders_ci?schema=public
+        run: pnpm db:deploy
+
+      - name: Seed the content
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/amplifiedtraders_ci?schema=public
+          ADMIN_EMAIL: ci@amplifiedtraders.test
+          ADMIN_PASSWORD: ci-not-a-real-password
+          ADMIN_NAME: CI Admin
+        run: |
+          pnpm db:seed
+          pnpm db:seed:content
+
+      - name: Assert the content landed
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/amplifiedtraders_ci?schema=public
+        run: pnpm tsx infrastructure/deploy/assert-content.ts
+
+      - name: Build
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/amplifiedtraders_ci?schema=public
+          NEXT_PUBLIC_SITE_URL: http://localhost:3600
+        run: pnpm build

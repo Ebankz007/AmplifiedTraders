@@ -134,9 +134,9 @@ export default async function WalletPage() {
             <h2 className="text-sm font-semibold text-foreground">
               Recent activity
             </h2>
-            <a href="/dashboard/transactions" className="text-sm text-brand">
+            <Link href="/dashboard/transactions" className="text-sm text-brand">
               View all
-            </a>
+            </Link>
           </div>
           {entries.length === 0 ? (
             <p className="px-5 pb-6 text-sm text-faint">

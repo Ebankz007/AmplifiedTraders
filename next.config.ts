@@ -35,6 +35,12 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  // The deploy builds into a staging directory and swaps it into place, so a
+  // failed build never takes down the live bundle: `next build` wipes its own
+  // output directory, so building straight into `.next` would delete the chunks
+  // the running server is serving. Unset (the normal case) = the default
+  // `.next`. See infrastructure/deploy/deploy.sh.
+  distDir: process.env.NEXT_DIST_DIR || ".next",
   turbopack: {
     rules: {
       "*.css": {

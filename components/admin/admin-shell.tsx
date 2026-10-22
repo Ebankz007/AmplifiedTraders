@@ -101,11 +101,17 @@ export function AdminShell({
 }) {
   const pathname = usePathname();
   const [open, setOpen] = React.useState(false);
+  const [lastPathname, setLastPathname] = React.useState(pathname);
 
   // A drawer left open across a navigation would cover the page it navigated to.
-  React.useEffect(() => {
+  // Adjusting the state during render — rather than in an effect — is React's
+  // documented pattern for "reset state when a value changes": React discards
+  // the current render and re-renders immediately, with no cascading render and
+  // no effect scheduling.
+  if (pathname !== lastPathname) {
+    setLastPathname(pathname);
     setOpen(false);
-  }, [pathname]);
+  }
 
   return (
     <div className="relative min-h-screen">
