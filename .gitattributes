@@ -1,0 +1,13 @@
+# The deploy scripts run under /bin/sh on the server. A stray CR turns every
+# line into "$'\r': command not found" and the deploy dies at the first line.
+# Pin them to LF so no contributor's core.autocrlf can break a release.
+*.sh            text eol=lf
+*.mjs           text eol=lf
+*.yml           text eol=lf
+*.yaml          text eol=lf
+
+# The Prisma migrations are executed by psql; same rule.
+prisma/migrations/**/*.sql text eol=lf
+
+# Lockfiles are generated - never let an editor or a line-ending pass touch them.
+pnpm-lock.yaml  -text
