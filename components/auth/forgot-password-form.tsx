@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { Button, ButtonLink } from "@/components/ui/button";
 import {
   TextField,
   FormError,
@@ -10,7 +10,24 @@ import {
 } from "@/components/auth/form-field";
 import { postJson } from "@/lib/http";
 
-export function ForgotPasswordForm() {
+type ResetResponse = {
+  message?: string;
+  emailDelivery?: string;
+};
+
+/**
+ * The server owns the wording of every message this form shows.
+ *
+ * A client that hardcodes "we sent you a link" is a client that can promise
+ * a mail the deployment never sent - and this one is rendered on a platform
+ * whose mail transport does not exist yet. So: the capability arrives as a
+ * prop, and the wording arrives in the response.
+ */
+export function ForgotPasswordForm({
+  emailDelivery = "available",
+}: {
+  emailDelivery?: "available" | "unavailable";
+}) {
   const [pending, setPending] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [notice, setNotice] = React.useState<string | null>(null);
@@ -22,7 +39,7 @@ export function ForgotPasswordForm() {
     setPending(true);
 
     const form = new FormData(event.currentTarget);
-    const res = await postJson("/api/auth/forgot-password", {
+    const res = await postJson<ResetResponse>("/api/auth/forgot-password", {
       email: String(form.get("email") ?? ""),
     });
     setPending(false);
@@ -32,7 +49,37 @@ export function ForgotPasswordForm() {
       return;
     }
     setNotice(
-      "If an account exists for that email, a reset link has been sent.",
+      res.data.message ??
+        "If that address is registered, a reset link is on its way.",
+    );
+  }
+
+  if (emailDelivery === "unavailable") {
+    return (
+      <div className="card border-brand-gradient p-7">
+        <h1 className="font-display text-2xl font-bold tracking-tight text-foreground">
+          Reset your password
+        </h1>
+        <p className="mt-1.5 text-sm text-muted">
+          Password reset by email is not available on this deployment. No
+          message has been sent, and none can be.
+        </p>
+        <p className="mt-3 text-sm text-muted">
+          Send us a message and an operator will help you get back in.
+        </p>
+
+        <div className="mt-6 flex flex-col gap-3">
+          <ButtonLink href="/contact" size="lg" className="w-full">
+            Contact us
+          </ButtonLink>
+          <Link
+            href="/login"
+            className="text-center text-sm font-medium text-brand hover:underline"
+          >
+            Back to sign in
+          </Link>
+        </div>
+      </div>
     );
   }
 
