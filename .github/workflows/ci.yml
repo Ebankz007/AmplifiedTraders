@@ -19,6 +19,29 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
+    # The marketing pages and the blog post routes are PRERENDERED at build
+    # time from the database, so the build needs a live Postgres with the
+    # schema and the seeded content. CI spins up one and seeds it.
+    #
+    # Postgres is a SERVICE, not a step: a step-level `uses:` must be
+    # owner/repo@ref or docker://image, and `postgres:16` is neither. When
+    # that is wrong GitHub rejects the whole workflow file at validation time,
+    # which surfaces as a failed run with zero jobs and no annotations.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: amplifiedtraders_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -48,16 +71,6 @@ jobs:
 
       - name: Test
         run: pnpm test
-
-      # The marketing pages and the blog post routes are PRERENDERED at build
-      # time from the database, so the build needs a live Postgres with the
-      # schema and the seeded content. CI spins up one and seeds it.
-      - name: Start PostgreSQL
-        uses: postgres:16
-        with:
-          postgres-password: postgres
-          postgres-user: postgres
-          postgres-db: amplifiedtraders_ci
 
       - name: Apply the schema
         env:
