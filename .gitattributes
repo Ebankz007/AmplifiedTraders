@@ -5,6 +5,7 @@
 *.mjs           text eol=lf
 *.yml           text eol=lf
 *.yaml          text eol=lf
+*.ps1           text eol=lf
 
 # The Prisma migrations are executed by psql; same rule.
 prisma/migrations/**/*.sql text eol=lf
