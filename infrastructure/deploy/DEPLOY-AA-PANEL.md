@@ -355,6 +355,23 @@ curl -s -o /dev/null -b /tmp/at.jar -w '%{http_code}\n' https://amplifiedtraders
 Then walk the product: register a member, log in, submit a deposit, confirm it as an admin,
 and check the wallet balance and the ledger entry.
 
+That walk is already automated. `tools/smoke/live-money-loop.ps1` drives it against a **running
+deployment** - register, deposit, operator confirms, wallet credited, withdraw, operator
+rejects, hold refunded, ledger checked, member area checked to be guarded:
+
+```sh
+export AT_ADMIN_PASSWORD='<the admin password>'   # never stored in the repo
+powershell -File tools/smoke/live-money-loop.ps1
+```
+
+It leaves one clearly-labelled member behind (`smoke.moneyloop.<timestamp>@…invalid`) and its
+ledger rows in place - a financial ledger is not something to delete from. Look for that email
+prefix to find them.
+
+> The bodies travel in files (`--data-binary @file`), never as command arguments. Windows strips
+> the embedded double quotes out of a native command's argv, which turns valid JSON into a `400`
+> that reads exactly like a login failure.
+
 ---
 
 ## 10. What the deploy script does, in order

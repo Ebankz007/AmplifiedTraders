@@ -1,11 +1,15 @@
 # Amplified Traders
 
-> Status: **BUILT — Phases 1–4 implemented and verified.** Public marketing site,
-> auth + RBAC, and the member portal (dashboard, community, support, transactions,
-> verification, notifications, settings). Typecheck clean · **121 tests green** ·
-> production build clean · verified live on **:3600**.
+> Status: **LIVE at [amplifiedtraders.com](https://amplifiedtraders.com).** Phases 1–5
+> implemented and verified — public marketing site, auth + RBAC, member portal
+> (dashboard, community, support, transactions, verification, notifications,
+> settings), admin console (deposits, withdrawals, KYC, support, team, settings,
+> audit log), the money loop, and a CI-gated auto-deploy. Typecheck clean ·
+> **264 tests green** (28 files) · production build clean (63 pages) · **money loop
+> proven against the live deployment**.
 > Start at [`docs/PLAN.md`](docs/PLAN.md) · [`docs/BRAND.md`](docs/BRAND.md) ·
-> [`docs/CONCEPT.md`](docs/CONCEPT.md) · [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
+> [`docs/CONCEPT.md`](docs/CONCEPT.md) · [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) ·
+> [`infrastructure/deploy/DEPLOY-AA-PANEL.md`](infrastructure/deploy/DEPLOY-AA-PANEL.md).
 
 ## What this is
 **Amplified Traders** — a digital trading community (not a broker) bundling four
@@ -24,7 +28,8 @@ Zod 4 · Vitest 5 · pnpm 11.12. Compensation engine ported into `lib/engine`
 ## Getting started
 ```bash
 pnpm install                 # runs prisma generate (postinstall)
-cp .env.example .env         # then set DATABASE_URL + AUTH_SECRET
+cp .env.example .env         # then set DATABASE_URL — there is no AUTH_SECRET:
+                              # sessions are opaque tokens hashed server-side
 pnpm db:deploy               # apply migrations
 pnpm db:seed                 # idempotent seed (pools, settings, nav)
 pnpm dev                     # http://localhost:3600
@@ -40,11 +45,14 @@ pnpm build                   # next build
 ## Layout
 ```
 AmplifiedTraders/
-  app/                 routes: public site, auth, dashboard, api
+  app/                 routes: public site, auth, dashboard, admin, api
   components/          site/ · home/ · ui/ · dashboard/ · auth/
   lib/                 auth, prisma, money, validators, engine/
   prisma/              schema.prisma · migrations/ · seed.ts
-  tests/               engine + auth + money (121 tests)
+  tests/               engine · auth · wallet · admin · site (28 files, 264 tests)
+  infrastructure/
+    deploy/            deploy.sh · ci-gate.mjs · bootstrap.sh · aaPanel runbook
+  tools/smoke/         live-money-loop.ps1 — drives the real money loop
   docs/
     BRAND.md           brand book (source of truth)
     CONCEPT.md         thesis, pillars, regulatory posture, decisions
