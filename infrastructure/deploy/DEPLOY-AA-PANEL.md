@@ -54,33 +54,31 @@ If the panel starts returning that HTML page again, the egress IP changed — ch
 
 ---
 
-## 4. Create the database (panel API)
+## 4. Create the database (`psql`, not the panel API)
 
-`POST /database?action=AddDatabase`
+`POST /database?action=AddDatabase` **does not work on this box**. The module answers
+`{"status": false, "msg": "Specific parameters are invalid!"}`, and the sibling list actions
+(`/databases?action=getList`, `/database?action=GetDatabaseList`) return either the ingress
+HTML page or that same "invalid parameters" error. The database was therefore created directly
+with `psql` as the `postgres` superuser:
 
-Required parameters — the validator rejects the call if any is missing:
+```sh
+su postgres -c "psql -c \"CREATE ROLE amplifiedtraders LOGIN PASSWORD '<strong password>';\""
+su postgres -c "psql -c \"CREATE DATABASE amplifiedtraders_prod OWNER amplifiedtraders;\""
+```
 
-| Param | Value |
-|---|---|
-| `name` | `amplifiedtraders` |
-| `db_user` | `amplifiedtraders` |
-| `password` | a strong generated password |
-| `codeing` | `UTF8` |
-| `sid` | `0` (local server) |
-| `active` | `true` |
-| `address` | `localhost` |
-| `ps` | `Amplified Traders` (a label) |
-| `dtype` | `pgsql` |
+Notes:
+- The PostgreSQL 16 binaries are **system** packages: `psql` lives at **`/bin/psql`**, *not*
+  `/www/server/pgsql/bin/psql`. There is no `/www/server/pgsql/` directory on this box.
+- The role is a plain `LOGIN` role — **not** a superuser — and it owns the database.
+- Authentication is `scram-sha-256`; the server listens on `127.0.0.1` only. Do not widen it.
+- The database is named **`amplifiedtraders_prod`**, not `amplifiedtraders`.
 
-`listen_ip` defaults to `127.0.0.1/32` — the database is reachable only from the box. Do not
-widen it.
+**Assert the ledger, not the exit code.** A successful-looking response is not proof the
+database exists. Verify independently:
 
-**Assert the ledger, not the exit code.** The call returns JSON, but a successful-looking
-response is not proof the database exists. Verify independently:
-
-```sql
--- via /www/server/pgsql/bin/psql
-psql -h 127.0.0.1 -U amplifiedtraders -d amplifiedtraders -c '\conninfo'
+```sh
+su postgres -c "psql -d amplifiedtraders_prod -c '\conninfo'"
 ```
 
 ---
@@ -94,7 +92,7 @@ It is gitignored, so `git reset --hard` leaves it alone (and the deploy never ru
 `git clean`, for exactly this reason).
 
 ```
-DATABASE_URL="postgresql://amplifiedtraders:<password>@127.0.0.1:5432/amplifiedtraders?schema=public"
+DATABASE_URL="postgresql://amplifiedtraders:<password>@127.0.0.1:5432/amplifiedtraders_prod?schema=public"
 NEXT_PUBLIC_SITE_URL="https://amplifiedtraders.com"
 NEXT_PUBLIC_SITE_NAME="Amplified Traders"
 ADMIN_EMAIL="admin@amplifiedtraders.com"
@@ -114,9 +112,17 @@ Notes:
   emails therefore do not arrive. That is honest, not broken.
 
 Writing it through the panel's file API: `POST /files?action=SaveFileBody` with `path` and
-`data`. **The file must already exist** — the API refuses to create a new file
-("Configuration file not exist"). Create it first with an empty `touch` through the shell
-channel (§6), then save the body over it.
+`data`. **The file must already exist** — `SaveFileBody` refuses to create a new file
+("Configuration file not exist"). Two ways to satisfy that:
+
+- `POST /files?action=CreateFile` with `path` — but only **inside the site webroot**.
+  Creating a file under `/tmp` and then saving over it fails with
+  `Permission denied (Errno 13)`, because the panel's file API runs as a different user than
+  the one that owns `/tmp` state. Stage in `/www/wwwroot/amplifiedtraders.com/`, write there,
+  read it back, then move it into place with the shell channel (§6).
+- Or create it with an empty `touch` through the shell channel (§6), then save the body over it.
+
+Always **read the file back** after writing. A write you did not read back is not a write.
 
 ---
 
@@ -155,61 +161,144 @@ a stray root shell that runs forever.
 ## 7. The Apache vhost
 
 The live web server on this box is **Apache**, not Nginx. The vhost lives at
-`/www/server/panel/vhost/apache/amplifiedtraders.com.conf`.
+`/www/server/panel/vhost/apache/amplifiedtraders.com.conf` and is included from
+`/www/server/apache/conf/httpd.conf` via
+`IncludeOptional /www/server/panel/vhost/apache/*.conf`.
 
-It must reverse-proxy to the app instead of serving the aaPanel placeholder:
+### 7.1 The reverse proxy is a security control, not a convenience
+
+The vhost's `DocumentRoot` **is the git checkout** (`/www/wwwroot/amplifiedtraders.com`).
+Serving that directory directly publishes the entire repository over HTTPS — verified on the
+live box before the proxy was installed:
+
+| Path | Served directly | Through the proxy |
+|---|---|---|
+| `/package.json` | 200 | 404 |
+| `/prisma/schema.prisma` | 200 (32,840 bytes) | 404 |
+| `/infrastructure/deploy/deploy.sh` | 200 | 404 |
+| `/.git/config` | 200 | 404 |
+| `/.env` | 403 (aaPanel deny rule) | 404 |
+
+Only `/.env` was protected, and only by an aaPanel deny rule. Everything else — the schema,
+the deploy script, the dependency manifest — was world-readable. **The proxy is what closes
+that.** Do not "simplify" it back to a static DocumentRoot.
+
+### 7.2 The working vhost
 
 ```apache
-ProxyPreserveHost On
-RequestHeader set X-Forwarded-Proto "https"
-
 <VirtualHost *:80>
-    ServerName amplifiedtraders.com
+    ServerName  amplifiedtraders.com
+    ServerAlias www.amplifiedtraders.com
+
+    # aaPanel renews this certificate with HTTP-01 *file* verification against the
+    # site DocumentRoot. The proxy must never swallow the challenge path, or
+    # renewal breaks when the cert expires.
+    ProxyPass        /.well-known/acme-challenge/ !
+
+    RewriteEngine On
+    RewriteCond %{REQUEST_URI} !^/\.well-known/acme-challenge/ [NC]
+    RewriteRule ^/(.*)$ https://amplifiedtraders.com/$1 [R=301,L]
+</VirtualHost>
+
+<VirtualHost *:443>
+    ServerName  amplifiedtraders.com
+    ServerAlias www.amplifiedtraders.com
+
+    ProxyPreserveHost On
+    RequestHeader set X-Forwarded-Proto "https"
+    RequestHeader set X-Forwarded-Port "443"
+
     ProxyPass        / http://127.0.0.1:3300/
     ProxyPassReverse / http://127.0.0.1:3300/
+
+    # ...aaPanel's SSL certificate paths, error logs, and access logs stay as-is.
 </VirtualHost>
 ```
 
-Keep the SSL block that aaPanel generated (the certificate already exists and works) and
-add the proxy directives to it as well, so both HTTP and HTTPS reach the app.
+`ProxyPreserveHost On` keeps `Host: amplifiedtraders.com` upstream, so Next.js builds absolute
+URLs against the right origin. `X-Forwarded-Proto` must be set explicitly — Apache does not add
+it — or the app believes it is being served over plain HTTP.
 
-The `www` host currently serves the default nginx welcome page — it needs its own vhost
-entry, or a redirect to the apex domain.
+### 7.3 Certificate renewal depends on the carve-out
 
-Reload the web server after editing:
+There is **no `acme.sh`** on this box. aaPanel renews with its own client:
 
 ```sh
-/www/server/panel/webserver/sbin/webserver -t   # test the config
-/www/server/panel/webserver/sbin/webserver -s reload
+python3 -u /www/server/panel/class/acme_v2.py --renew_v3=1
 ```
+
+It uses **HTTP-01 file verification**: it writes
+`/www/wwwroot/amplifiedtraders.com/.well-known/acme-challenge/<token>` and fetches it over
+**plain HTTP on port 80**. That is exactly why §7.2 excludes the challenge path from both the
+proxy and the redirect. If you remove that carve-out, renewal fails silently and the site dies
+when the certificate expires.
+
+The certificate in place covers **`amplifiedtraders.com` only** — its SAN list is
+`DNS:amplifiedtraders.com`, with no `www`. So `https://www.amplifiedtraders.com` serves the
+right content but raises a name-mismatch warning, and `http://www...` correctly 301s to the
+apex. Adding `www` means re-issuing the certificate (the `www` alias and
+`ProxyPreserveHost` are already in place — only the certificate needs swapping). Mind the
+Let's Encrypt rate limits: this account has already hit "more than 5 failed orders within
+1 hour" on another domain.
+
+### 7.4 Editing the vhost safely
+
+The panel's file API cannot create files in the vhost directory. Stage the new file in the
+webroot, then move it into place with the shell channel (§6).
+
+**Test before you reload.** The binary is `/www/server/apache/bin/httpd` — there is no
+`apachectl` on this box:
+
+```sh
+/www/server/apache/bin/httpd -t          # "Syntax OK" or the exact line that broke
+/www/server/apache/bin/httpd -k graceful  # reload without dropping connections
+```
+
+A vhost that drops a closing tag produces `Syntax error on line N: <VirtualHost> was not
+closed`. The safe sequence is: write the new file beside the old one, `httpd -t`, and only
+then swap it in and reload — with the previous file kept as
+`amplifiedtraders.com.conf.bak-kairos` so a rollback is one `cp`.
+
+Two traps worth writing down:
+
+- If you transform the vhost with a regex, the replacement must re-emit **every** capture
+  group. Dropping the `</VirtualHost>` group yields a config that parses as an unclosed
+  virtual host.
+- Assert the result before reloading: two `<VirtualHost` openings, two `</VirtualHost>`
+  closings, and the `ProxyPass`/`ProxyPreserveHost` directives present **only** in the `:443`
+  block.
 
 ---
 
 ## 8. The deploy cron
 
-`POST /crontab?action=AddCrontab` — every 2 minutes, `sType=toShell`:
+`POST /crontab?action=AddCrontab` — every 2 minutes, `sType=toShell`. The row as it exists on
+the box (id **104**):
 
-```
-name    = amplifiedtraders-auto-deploy
-type    = minute
-where1  = 2
-hour    = 1
-minute  = 5
-save    = 0
-backupTo = localhost
-sName   = amplifiedtraders-auto-deploy
-sType   = toShell
-urladdress = (the body below)
-```
+| Field | Value |
+|---|---|
+| `name` | `amplifiedtraders-auto-deploy` |
+| `type` | `minute-n` (the panel renders this as "Every 2 Minutes") |
+| `where1` | `2` |
+| `sType` | `toShell` |
+| `sName` | *(empty — a shell task, not a URL task)* |
+| `status` | `1` (active) |
 
-Body:
+Body (`sBody`):
 
 ```sh
-#!/bin/bash
-export PATH=/www/server/nodejs/v24.18.0/bin:$PATH
-cd /www/wwwroot/amplifiedtraders.com
-bash infrastructure/deploy/deploy.sh >> /var/log/amplifiedtraders-deploy.log 2>&1
+cd /www/wwwroot/amplifiedtraders.com && sh infrastructure/deploy/deploy.sh >> /var/log/amplifiedtraders-deploy.log 2>&1
 ```
+
+Notes:
+
+- **No `PATH` export in the cron body.** Cron shells carry a minimal `PATH`, but `deploy.sh`
+  sets its own (`export PATH="/www/server/nodejs/v24.18.0/bin:$PATH"`) and then resolves
+  `node`/`pnpm`/`pm2` against a list of known locations.
+- The script is invoked with `sh`, so it must stay POSIX-compatible — no bashisms.
+- The body must be **one line**. A multi-line `sBody` is not reliably preserved by the panel.
+- Sibling crons on this box belong to **other** projects (gthubx, aglotrends, copinex). Do not
+  touch them.
 
 The deploy script is idempotent: it fetches `origin/main`, compares the new commit with the
 last commit recorded in `deploy.log`, and when nothing changed it does a health check and
@@ -233,6 +322,35 @@ curl -s https://amplifiedtraders.com/packages | grep -c 'Tier'
 # the deploy log shows the last good release
 tail -20 /var/log/amplifiedtraders-deploy.log
 ```
+
+Then the two checks that matter most, because they are the ones that catch a misconfigured
+vhost:
+
+```sh
+# the repository is NOT reachable through the vhost -- every one must be 404
+for p in /package.json /prisma/schema.prisma /infrastructure/deploy/deploy.sh /.git/config /.env; do
+  printf '%-40s %s\n' "$p" "$(curl -s -o /dev/null -w '%{http_code}' "https://amplifiedtraders.com$p")"
+done
+
+# http redirects to https, but the ACME challenge path must NOT
+curl -s -o /dev/null -w '%{http_code} -> %{redirect_url}\n' http://amplifiedtraders.com/pricing
+curl -s -o /dev/null -w '%{http_code}\n' http://amplifiedtraders.com/.well-known/acme-challenge/probe
+
+# the admin console is guarded -- 307 to /admin/login without a session
+curl -s -o /dev/null -w '%{http_code} %{redirect_url}\n' https://amplifiedtraders.com/admin
+```
+
+With a valid admin session the same request returns `200`:
+
+```sh
+curl -s -c /tmp/at.jar -H 'Content-Type: application/json' \
+  --data-binary @login.json https://amplifiedtraders.com/api/admin/auth/login
+curl -s -o /dev/null -b /tmp/at.jar -w '%{http_code}\n' https://amplifiedtraders.com/admin
+```
+
+> Pass the JSON body **from a file** (`--data-binary @file.json`). Passing it inline on Windows
+> mangles the quotes and the server answers `400` — which looks like a login failure but is a
+> client-side quoting bug.
 
 Then walk the product: register a member, log in, submit a deposit, confirm it as an admin,
 and check the wallet balance and the ledger entry.
@@ -266,10 +384,18 @@ static files. The assert step (`infrastructure/deploy/assert-content.ts`) is wha
 | Symptom | Cause | Fix |
 |---|---|---|
 | Panel returns HTML, not JSON | Egress IP is not whitelisted | Re-check the IP, re-whitelist |
+| Panel returns the ingress page for a call you know worked | The request went to the bare panel root instead of a module path | The client helper takes a path (`/crontab?action=GetCrontab`), not module/action pairs |
+| `SaveFileBody` says `Configuration file not exist` | It overwrites but cannot create | `CreateFile` first, then save (§5) |
+| `CreateFile` then save fails with `Permission denied (Errno 13)` | The file was staged under `/tmp` | Stage inside the site webroot (§5) |
 | `Connection refused` on the panel port | Wrong port, or the panel's port changed | Check the panel URL |
 | Deploy log says `another deploy is already running` | A previous deploy is wedged | Check the lock dir's PID; the script clears a stale one automatically |
 | Deploy log says `no .env` | The secrets file is missing | Recreate it (§5) |
 | Deploy log says `content assertion failed` | The seed did not land | Run `pnpm db:seed:content` manually and read the error |
 | Site shows the aaPanel placeholder | The vhost was never replaced | §7 |
+| Site shows the aaPanel placeholder *and* the repo downloads | The vhost is serving the checkout directly | §7.1 — this is a leak, not a cosmetic bug |
+| `httpd -t` reports `<VirtualHost> was not closed` | A transform dropped a capture group | §7.4 — re-emit every group |
 | Site is 502 | The app is not running | `pm2 status`, `pm2 logs amplifiedtraders-web` |
 | `pnpm install` fails on the lockfile | The server's pnpm is a different major | The script retries without `--frozen-lockfile`; fix the server's pnpm to 11.12.0 |
+| `pnpm` fails with `detected dubious ownership` | Another cron's `git config --global` raced on `/root/.gitconfig.lock` | The scripts use `git -c safe.directory='*'` per invocation; never write the global config |
+| `https://www...` shows a certificate warning | The cert's SAN list has no `www` | §7.3 — re-issue; do not remove the `www` alias, the content is correct |
+| ACME renewal fails | The challenge path is being proxied or redirected | §7.2 — keep the carve-out |
