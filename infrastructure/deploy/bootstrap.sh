@@ -10,6 +10,12 @@
 # overwrites an existing .env — the secrets file is written once, by hand, and
 # this script only asserts it is present.
 #
+# Every git call carries `-c safe.directory='*'` instead of writing the global
+# git config. That config is shared by every project on this host, and the
+# sibling auto-deploys write to it at the same time, so they collide on
+# /root/.gitconfig.lock. Under `set -e` that collision aborted this script.
+# A per-invocation override touches no shared state and cannot lose the race.
+#
 # Secrets are NOT passed as arguments (they would land in the process table
 # and in shell history). They live in .env, which this script requires.
 
@@ -41,19 +47,15 @@ log "target: $APP_DIR (port $APP_PORT)"
 if [ -d "$APP_DIR/.git" ]; then
   log "checkout already exists — fetching"
   cd "$APP_DIR"
-  git fetch --prune origin || fail "git fetch failed"
-  git reset --hard "origin/$BRANCH" || fail "git reset failed"
-  git config --global --add safe.directory "$APP_DIR"
-  git config --global --add safe.directory '*'
+  git -c safe.directory='*' fetch --prune origin || fail "git fetch failed"
+  git -c safe.directory='*' reset --hard "origin/$BRANCH" || fail "git reset failed"
 else
   log "creating the checkout"
   mkdir -p "$(dirname "$APP_DIR")"
-  git clone --branch "$BRANCH" "$REPO_URL" "$APP_DIR" || fail "git clone failed"
+  git -c safe.directory='*' clone --branch "$BRANCH" "$REPO_URL" "$APP_DIR" || fail "git clone failed"
   cd "$APP_DIR"
-  git config --global --add safe.directory "$APP_DIR"
-  git config --global --add safe.directory '*'
 fi
-log "checked out $(git rev-parse --short HEAD)"
+log "checked out $(git -c safe.directory='*' rev-parse --short HEAD)"
 
 # ── 2. Toolchain ──────────────────────────────────────────────────────────
 GIT_BIN="$(resolve_bin git)"   || fail "git not found"

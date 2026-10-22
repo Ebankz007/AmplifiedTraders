@@ -70,15 +70,27 @@ function checkRuns(sha) {
             done("NONE");
             return;
           }
-          const finished = runs.every(
-            (r) => r.status === "completed" && r.conclusion === "success",
+          // A check that FAILED blocks the deploy. A check that was skipped or
+          // neutral did not fail - it did not apply - so it must not be read as
+          // RED. Reading "skipped" as RED would let one unrelated workflow
+          // permanently freeze every deploy on this repo.
+          const failed = runs.some(
+            (r) =>
+              r.status === "completed" &&
+              ["failure", "cancelled", "timed_out", "action_required", "stale"].includes(
+                r.conclusion,
+              ),
           );
-          if (finished) {
-            done("GREEN");
+          if (failed) {
+            done("RED");
             return;
           }
           const anyUnfinished = runs.some((r) => r.status !== "completed");
-          done(anyUnfinished ? "PENDING" : "RED");
+          if (anyUnfinished) {
+            done("PENDING");
+            return;
+          }
+          done("GREEN");
         });
       },
     );

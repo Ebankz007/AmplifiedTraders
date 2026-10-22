@@ -146,16 +146,22 @@ export PATH
 [ -f "$APP_DIR/.env" ] || fail "no .env in $APP_DIR — the server secrets file is missing"
 grep -q '^DATABASE_URL=' "$APP_DIR/.env" || fail ".env has no DATABASE_URL — refusing to deploy"
 
-PREV_COMMIT="$("$GIT_BIN" rev-parse HEAD)"
+# Trust the working directory per invocation, never through the shared global
+# git config: every project on this host writes to that config concurrently and
+# they collide on /root/.gitconfig.lock, which under `set -e` would abort the
+# deploy for a reason that has nothing to do with this commit.
+GIT_SAFE="-c safe.directory=*"
+
+PREV_COMMIT="$("$GIT_BIN" $GIT_SAFE rev-parse HEAD)"
 log "previous commit: $PREV_COMMIT"
 
 log "fetching origin/$BRANCH…"
-"$GIT_BIN" fetch --prune origin || fail "git fetch failed (network or remote down)"
+"$GIT_BIN" $GIT_SAFE fetch --prune origin || fail "git fetch failed (network or remote down)"
 
 log "resetting to origin/$BRANCH…"
-"$GIT_BIN" reset --hard "origin/$BRANCH" || fail "git reset failed"
+"$GIT_BIN" $GIT_SAFE reset --hard "origin/$BRANCH" || fail "git reset failed"
 
-NEW_COMMIT="$("$GIT_BIN" rev-parse HEAD)"
+NEW_COMMIT="$("$GIT_BIN" $GIT_SAFE rev-parse HEAD)"
 
 # The commit that was last BUILT and deployed successfully. `deploy.log` is
 # appended to only after a healthy deploy, so it is the ground truth for "what
@@ -233,7 +239,7 @@ build_bundle() {
 
 rollback() {
   log "health check FAILED — rolling back to $PREV_COMMIT"
-  "$GIT_BIN" reset --hard "$PREV_COMMIT" || log "rollback: git reset failed"
+  "$GIT_BIN" $GIT_SAFE reset --hard "$PREV_COMMIT" || log "rollback: git reset failed"
   ( cd "$APP_DIR" && pnpm install --frozen-lockfile ) >/dev/null 2>&1 || log "rollback: install failed"
   ( cd "$APP_DIR" && pnpm db:deploy ) >/dev/null 2>&1 || log "rollback: migrate failed (migrations are forward-only)"
   build_bundle >/dev/null 2>&1 || log "rollback: build failed"
