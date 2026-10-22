@@ -364,8 +364,15 @@ and check the wallet balance and the ledger entry.
    `DATABASE_URL`**. A deploy without a database is refused.
 3. `git fetch --prune origin` + `git reset --hard origin/main`.
 4. If the commit is unchanged, health check only — no rebuild.
-5. **CI gate**: refuses to deploy a commit whose GitHub checks are red. GitHub unreachable
-   is fail-open, and says so in the log.
+5. **CI gate**: refuses to deploy a commit whose GitHub checks are red. The gate reads
+   `/commits/{sha}/check-runs` **with a cache-buster** — GitHub serves cached GET responses, and a
+   stale snapshot reported a finished check as `queued`, which burned the whole wait and then
+   shipped the commit unverified. The three outcomes are deliberately different:
+   - `RED` → **refuse** (the commit failed CI).
+   - `UNKNOWN` (GitHub unreachable) → **proceed, fail-open**, logged loudly.
+   - `PENDING`/`NONE` past `CI_WAIT_SECONDS` → **refuse**. A wait that expired means "CI has not
+     blessed this commit yet", which is not the same claim as "CI is unreachable". The cron retries
+     in two minutes, by which time CI has finished; shipping unverified code would defeat the gate.
 6. `pnpm install --frozen-lockfile` → `prisma generate` → `prisma migrate deploy` →
    `db:seed` → `db:seed:content` → **assert the content landed** → build → swap → restart.
 7. Health check `/api/health` and `/` for up to 60s.
@@ -384,6 +391,7 @@ static files. The assert step (`infrastructure/deploy/assert-content.ts`) is wha
 | Symptom | Cause | Fix |
 |---|---|---|
 | Panel returns HTML, not JSON | Egress IP is not whitelisted | Re-check the IP, re-whitelist |
+| Panel says `IP validation failed, your access IP is[1.2.3.4]` | The egress IP rotated off the whitelist | Whitelist the address it prints. The egress IP **flaps** between addresses, so both may be needed. The deploy cron is unaffected — it runs on the server, not through your IP |
 | Panel returns the ingress page for a call you know worked | The request went to the bare panel root instead of a module path | The client helper takes a path (`/crontab?action=GetCrontab`), not module/action pairs |
 | `SaveFileBody` says `Configuration file not exist` | It overwrites but cannot create | `CreateFile` first, then save (§5) |
 | `CreateFile` then save fails with `Permission denied (Errno 13)` | The file was staged under `/tmp` | Stage inside the site webroot (§5) |

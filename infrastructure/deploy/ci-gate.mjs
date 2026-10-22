@@ -30,7 +30,11 @@ if (!sha) {
 /** @returns {Promise<string>} one of GREEN | RED | PENDING | NONE | UNKNOWN */
 function checkRuns(sha) {
   return new Promise((resolve) => {
-    const url = `https://api.github.com/repos/${REPO}/commits/${sha}/check-runs`;
+    // The cache-buster is not decoration. The GitHub API serves cached GET
+    // responses, and a stale snapshot can report a check as "queued" minutes
+    // after it finished. That turned a green CI into a 240s wait and then a
+    // fail-open deploy. A unique query parameter forces a fresh read.
+    const url = `https://api.github.com/repos/${REPO}/commits/${sha}/check-runs?nocache=${Date.now()}`;
     let settled = false;
     const done = (v) => {
       if (!settled) {
@@ -46,6 +50,7 @@ function checkRuns(sha) {
           Accept: "application/vnd.github+json",
           "X-GitHub-Api-Version": "2022-11-28",
           "User-Agent": "amplifiedtraders-deploy",
+          "Cache-Control": "no-cache",
         },
       },
       (res) => {

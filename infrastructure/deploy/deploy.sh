@@ -197,6 +197,13 @@ fi
 # ── CI gate ───────────────────────────────────────────────────────────────
 # Deploy only what CI blessed. The cron poll usually fires before the workflow
 # has had a chance to start, so PENDING and NONE are waited out, not failed.
+#
+# The wait EXPIRES into a refusal, not into a deploy. A timeout means "CI has
+# not blessed this commit yet" — which is not the same claim as "CI is
+# unreachable" (UNKNOWN, the one case that legitimately fails open). Shipping
+# unverified code because a wait ran out defeats the gate entirely; refusing
+# costs one poll cycle, because the cron retries in two minutes and CI will
+# have finished by then.
 if [ "$REQUIRE_CI_GREEN" = "1" ]; then
   log "checking CI status for $NEW_COMMIT…"
   waited=0
@@ -213,7 +220,7 @@ if [ "$REQUIRE_CI_GREEN" = "1" ]; then
   case "$ci" in
     GREEN|UNKNOWN) : ;;
     RED) fail "CI is RED for $NEW_COMMIT — refusing to deploy" ;;
-    *)   log "CI never finished (last: $ci) — proceeding, fail-open" ;;
+    *)   fail "CI did not finish within ${CI_WAIT_SECONDS}s (last: $ci) — refusing to deploy unverified code; the next cron tick retries" ;;
   esac
 fi
 
