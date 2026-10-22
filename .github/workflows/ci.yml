@@ -42,6 +42,9 @@ jobs:
           --health-timeout 5s
           --health-retries 10
 
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/amplifiedtraders_ci?schema=public
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -63,6 +66,15 @@ jobs:
       - name: Generate the Prisma client
         run: pnpm db:generate
 
+      # The schema comes BEFORE the tests. tests/wallet/wallet-db.test.ts
+      # imports @/lib/prisma, which reads DATABASE_URL at import time and
+      # throws if it is missing — so the suite cannot even load without a
+      # database, and the `describe.skipIf(!hasDb)` guard in it is unreachable.
+      # With DATABASE_URL set (job-level env) and the schema in place, those
+      # eleven tests actually RUN in CI instead of silently skipping.
+      - name: Apply the schema
+        run: pnpm db:deploy
+
       - name: Typecheck
         run: pnpm typecheck
 
@@ -72,14 +84,10 @@ jobs:
       - name: Test
         run: pnpm test
 
-      - name: Apply the schema
-        env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/amplifiedtraders_ci?schema=public
-        run: pnpm db:deploy
-
+      # The content seed is create-if-absent, so it is safe to re-run and it
+      # never overwrites what a previous run wrote.
       - name: Seed the content
         env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/amplifiedtraders_ci?schema=public
           ADMIN_EMAIL: ci@amplifiedtraders.test
           ADMIN_PASSWORD: ci-not-a-real-password
           ADMIN_NAME: CI Admin
@@ -88,12 +96,9 @@ jobs:
           pnpm db:seed:content
 
       - name: Assert the content landed
-        env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/amplifiedtraders_ci?schema=public
         run: pnpm tsx infrastructure/deploy/assert-content.ts
 
       - name: Build
         env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/amplifiedtraders_ci?schema=public
           NEXT_PUBLIC_SITE_URL: http://localhost:3600
         run: pnpm build
